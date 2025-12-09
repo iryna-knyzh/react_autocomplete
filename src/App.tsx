@@ -1,13 +1,13 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import './App.scss';
 import { peopleFromServer } from './data/people';
 import { Person } from './types/Person';
 import classNames from 'classnames';
 
-function debounce(callback: Function, delay: number = 300) {
+function debounce(callback, delay: number = 300) {
   let timerId = 0;
 
-  return (...args: any) => {
+  return (...args) => {
     window.clearInterval(timerId);
 
     timerId = window.setTimeout(() => {
@@ -18,7 +18,7 @@ function debounce(callback: Function, delay: number = 300) {
 
 export const App: React.FC = () => {
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
-  const [qery, setQuery] = useState('');
+  const [query, setQuery] = useState('');
   const [appliedQuery, setAppliedQuery] = useState('');
   const [isDropdownActive, setIsDropdownActive] = useState(false);
 
@@ -26,8 +26,18 @@ export const App: React.FC = () => {
 
   const handleQueryChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setQuery(event.target.value);
+    if (!event.target.value.trim()) {
+      return;
+    }
+
     applyQuery(event.target.value);
     setSelectedPerson(null);
+  };
+
+  const onSelected = (person: Person) => {
+    setSelectedPerson(person);
+    setIsDropdownActive(false);
+    setQuery(person.name);
   };
 
   const filteredPeople = useMemo(() => {
@@ -54,7 +64,7 @@ export const App: React.FC = () => {
               placeholder="Enter a part of the name"
               className="input"
               data-cy="search-input"
-              value={qery}
+              value={query}
               onChange={handleQueryChange}
               onFocus={() => setIsDropdownActive(true)}
             />
@@ -67,10 +77,7 @@ export const App: React.FC = () => {
                   className="dropdown-item"
                   data-cy="suggestion-item"
                   key={person.name}
-                  onClick={() => {
-                    setSelectedPerson(person);
-                    setIsDropdownActive(false);
-                  }}
+                  onClick={() => onSelected(person)}
                 >
                   <p className="has-text-link">{person.name}</p>
                 </div>
@@ -79,24 +86,22 @@ export const App: React.FC = () => {
           </div>
         </div>
 
-        {
-          filteredPeople.length === 0 && (
-            <div
-              className="
+        {filteredPeople.length === 0 && isDropdownActive && (
+          <div
+            className="
             notification
             is-danger
             is-light
             mt-3
             is-align-self-flex-start
           "
-              role="alert"
-              data-cy="no-suggestions-message"
-            >
-              <p className="has-text-danger">No matching suggestions</p>
-            </div>
-          )
-        }
-      </main >
-    </div >
+            role="alert"
+            data-cy="no-suggestions-message"
+          >
+            <p className="has-text-danger">No matching suggestions</p>
+          </div>
+        )}
+      </main>
+    </div>
   );
 };
